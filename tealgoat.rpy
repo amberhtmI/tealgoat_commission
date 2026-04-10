@@ -61,10 +61,6 @@ default spades_jack = Cards("images/tealgoat/cards/jack_of_spades.png","jack_of_
 default spades_queen = Cards("images/tealgoat/cards/queen_of_spades.png","queen_of_spades",12,"high")
 default spades_king = Cards("images/tealgoat/cards/king_of_spades.png","king_of_spades",13,"high")
 
-
-
-
-
 default current_bet = 1
 default previous_bet = 1
 default round_winner = ''
@@ -80,6 +76,8 @@ default player_picked = None
 default player_arrows = []
 default player_chips = 10
 
+default player_status = None
+
 default opponent_deck = [
     clubs_ace,clubs_two,clubs_three,clubs_four,clubs_five,clubs_six,clubs_seven,clubs_eight,clubs_nine,clubs_ten,clubs_jack,clubs_queen,clubs_king,
     diamonds_ace,diamonds_two,diamonds_three,diamonds_four,diamonds_five,diamonds_six,diamonds_seven,diamonds_eight,diamonds_nine,diamonds_ten,diamonds_jack,diamonds_queen,diamonds_king,
@@ -91,6 +89,8 @@ default opponent_picked = None
 default opponent_arrows = []
 default opponent_chips = 10
 
+default opponent_checked = False
+
 default battle_one_won = None
 default battle_two_won = None
 default battle_three_won = None
@@ -101,6 +101,9 @@ label cardgame_reset():
     $ current_bet = 1
     $ previous_bet = 1
     $ round_winner = ''
+
+    $ player_status = None
+    $ opponent_checked = False
     
     $ player_hand = []
     $ player_picked = None
@@ -191,7 +194,6 @@ label cardgame_battle1(gamenumber):
             show kid g3 lostg2 lostg2 neutral
     show minigame_table
 
-
     $ player_hand.append(player_deck[renpy.random.randint(0,len(player_deck)-1)])
     $ player_deck.remove(player_hand[0])
     $ player_hand.append(player_deck[renpy.random.randint(0,len(player_deck)-1)])
@@ -228,6 +230,9 @@ label cardgame_battle1(gamenumber):
         $ player_arrows.append(player_hand[1].category)
         $ opponent_arrows.append(opponent_hand[0].category)
         $ opponent_arrows.append(opponent_hand[1].category)
+
+        $ player_status = None
+        $ opponent_checked = False
 
 
         # CHANGE EXPRESSION BASED ON NUMBER OF CHIPS
@@ -322,123 +327,196 @@ label cardgame_battle1(gamenumber):
         show screen cardgame_notify("Player has picked their card!")
         pause 1.5
         # CHECK / RAISE / FOLD SCREEN
-        $ previous_bet = current_bet
-        call screen cardgame_action_choice()
-        while _return != "poker_check":
-            if _return == "poker_fold":
-                pass
-            elif _return == "poker_raise":
-                call screen cardgame_raise()
-                if _return == "poker_back":
-                    call screen cardgame_action_choice()
-                show screen cardgame_notify("Player raised the bet to [current_bet]!")
-                pause 1.5
-        
-        # OPPONENT ACTION CHOICE
-        if opponent_picked.value == 1:
-            # HORSE KEEPS BETTING
-            while opponent_chips - current_bet > 2 and player_chips - current_bet >= 1:
-                $ current_bet += 1
-                show screen cardgame_notify("Opponent raised the bet to [current_bet]!")
-                pause 1.5
-        elif opponent_picked.value == 12 or opponent_picked.value == 13:
-            if player_arrows == ["low","low"]:
-                # HORSE KEEPS BETTING
-                while opponent_chips - current_bet > 2 and player_chips - current_bet >= 1:
-                    $ current_bet += 1
-                    show screen cardgame_notify("Opponent raised the bet to [current_bet]!")
-                    pause 1.5
-            elif player_arrows == ["low","high"] or player_arrows == ["high","low"]:
-                # HORSE ATTEMPTS TO RAISE, WORKS 80% OF THE TIME
-                if renpy.random.randint(1,5) != 1:
-                    if opponent_chips - current_bet >= 1 and player_chips - current_bet >= 1:
-                        $ current_bet += 1
-                        show screen cardgame_notify("Opponent raised the bet to [current_bet]!")
-                        pause 1.5
-            elif player_arrows == ["high","high"]:
-                # HORSE ATTEMPTS TO RAISE, WORKS 50% OF THE TIME
-                if renpy.random.randint(1,2) == 1:
-                    if opponent_chips - current_bet >= 1 and player_chips - current_bet >= 1:
-                        $ current_bet += 1
-                        show screen cardgame_notify("Opponent raised the bet to [current_bet]!")
-                        pause 1.5
-        elif opponent_picked.value == 11 or opponent_picked.value == 10:
-            if player_arrows == ["low","low"]:
-                # HORSE RAISES
-                if opponent_chips - current_bet >= 1 and player_chips - current_bet >= 1:
-                    $ current_bet += 1
-                    show screen cardgame_notify("Opponent raised the bet to [current_bet]!")
-                    pause 1.5
-            elif player_arrows == ["low","high"] or player_arrows == ["high","low"]:
-                # HORSE ATTEMPTS TO RAISE, WORKS 65% OF THE TIME
-                if renpy.random.randint(1,20) >= 13:
-                    if opponent_chips - current_bet >= 1 and player_chips - current_bet >= 1:
-                        $ current_bet += 1
-                        show screen cardgame_notify("Opponent raised the bet to [current_bet]!")
-                        pause 1.5
-            elif player_arrows == ["high","high"]:
-                # HORSE ATTEMPTS TO RAISE, WORKS 20% OF THE TIME
-                if renpy.random.randint(1,5) == 2:
-                    if opponent_chips - current_bet >= 1 and player_chips - current_bet >= 1:
-                        $ current_bet += 1
-                        show screen cardgame_notify("Opponent raised the bet to [current_bet]!")
-                        pause 1.5
-        elif opponent_picked.value == 9 or opponent_picked.value == 8:
-            if player_arrows == ["low","low"]:
-                # HORSE RAISES
-                if opponent_chips - current_bet >= 1 and player_chips - current_bet >= 1:
-                    $ current_bet += 1
-                    show screen cardgame_notify("Opponent raised the bet to [current_bet]!")
-                    pause 1.5
-            elif player_arrows == ["low","high"] or player_arrows == ["high","low"]:
-                # HORSE CHECKS
-                pass
-            elif player_arrows == ["high","high"]:
-                # HORSE CHECKS
-                pass
-        elif opponent_picked.value == 7:
-            if player_arrows == ["low","low"]:
-                # HORSE RAISES
-                if opponent_chips - current_bet >= 1 and player_chips - current_bet >= 1:
-                    $ current_bet += 1
-                    show screen cardgame_notify("Opponent raised the bet to [current_bet]!")
-                    pause 1.5
-            elif player_arrows == ["low","high"] or player_arrows == ["high","low"]:
-                # HORSE CHECKS
-                pass
-            elif player_arrows == ["high","high"]:
-                # HORSE CHECKS
-                pass
-        else:
-            if player_arrows == ["low","low"]:
-                # HORSE CHECKS
-                pass
-            elif player_arrows == ["low","high"] or player_arrows == ["high","low"]:
-                # HORSE CHECKS
-                pass
-            elif player_arrows == ["high","high"]:
-                # HORSE CHECKS
-                pass
-        show screen cardgame_notify("Both players check!")
-        pause 1.5
+        # LOOP UNTIL BOTH PLAYER AND HORSE CHECK OR PLAYER FOLDS
+        while player_status == None or opponent_checked != True:
+            $ player_status = None
+            $ opponent_checked = False
 
+            call screen cardgame_action_choice()
+ 
+
+            if _return == "poker_fold":
+                show screen cardgame_notify("Player folds!")
+                pause 1.5
+                $ player_status = "fold"
+                $ opponent_checked = True
+            else:
+                if _return == "poker_check":
+                    show screen cardgame_notify("Player checks!")
+                    pause 1.5
+                    $ player_status = "check"
+                elif _return == "poker_raise":
+                    call screen cardgame_raise()
+                    if _return == "poker_deal":
+                        show screen cardgame_notify("Player raised the bet to [current_bet]!")
+                        pause 1.5
+                    elif _return == "poker_back":
+                        show screen cardgame_notify("Player checks!")
+                        pause 1.5
+                        $ player_status = "check"
+                $ previous_bet = current_bet
+                
+        
+            # OPPONENT ACTION CHOICE
+            if player_status == "fold":
+                pass
+            else:
+                if opponent_picked.value == 1:
+                    # HORSE KEEPS BETTING
+                    if opponent_chips - current_bet > 2 and player_chips - current_bet >= 1:
+                        $ current_bet += 1
+                        show screen cardgame_notify("Opponent raised the bet to [current_bet]!")
+                        pause 1.5
+                    else:
+                        show screen cardgame_notify("Opponent checks!")
+                        pause 1.5
+                        $ opponent_checked = True
+                elif opponent_picked.value == 12 or opponent_picked.value == 13:
+                    if player_arrows == ["low","low"]:
+                        # HORSE KEEPS BETTING
+                        if opponent_chips - current_bet > 2 and player_chips - current_bet >= 1:
+                            $ current_bet += 1
+                            show screen cardgame_notify("Opponent raised the bet to [current_bet]!")
+                            pause 1.5
+                        else:
+                            show screen cardgame_notify("Opponent checks!")
+                            pause 1.5
+                            $ opponent_checked = True
+                    elif player_arrows == ["low","high"] or player_arrows == ["high","low"]:
+                        # HORSE ATTEMPTS TO RAISE, WORKS 80% OF THE TIME
+                        if renpy.random.randint(1,5) != 1:
+                            if opponent_chips - current_bet >= 1 and player_chips - current_bet >= 1:
+                                $ current_bet += 1
+                                show screen cardgame_notify("Opponent raised the bet to [current_bet]!")
+                                pause 1.5
+                        else:
+                            show screen cardgame_notify("Opponent checks!")
+                            pause 1.5
+                            $ opponent_checked = True
+                    elif player_arrows == ["high","high"]:
+                        # HORSE ATTEMPTS TO RAISE, WORKS 50% OF THE TIME
+                        if renpy.random.randint(1,2) == 1:
+                            if opponent_chips - current_bet >= 1 and player_chips - current_bet >= 1:
+                                $ current_bet += 1
+                                show screen cardgame_notify("Opponent raised the bet to [current_bet]!")
+                                pause 1.5
+                        else:
+                            show screen cardgame_notify("Opponent checks!")
+                            pause 1.5
+                            $ opponent_checked = True
+                elif opponent_picked.value == 11 or opponent_picked.value == 10:
+                    if player_arrows == ["low","low"]:
+                        # HORSE RAISES
+                        if opponent_chips - current_bet >= 1 and player_chips - current_bet >= 1:
+                            $ current_bet += 1
+                            show screen cardgame_notify("Opponent raised the bet to [current_bet]!")
+                            pause 1.5
+                        else:
+                            show screen cardgame_notify("Opponent checks!")
+                            pause 1.5
+                            $ opponent_checked = True
+                    elif player_arrows == ["low","high"] or player_arrows == ["high","low"]:
+                        # HORSE ATTEMPTS TO RAISE, WORKS 65% OF THE TIME
+                        if renpy.random.randint(1,20) >= 13:
+                            if opponent_chips - current_bet >= 1 and player_chips - current_bet >= 1:
+                                $ current_bet += 1
+                                show screen cardgame_notify("Opponent raised the bet to [current_bet]!")
+                                pause 1.5
+                        else:
+                            show screen cardgame_notify("Opponent checks!")
+                            pause 1.5
+                            $ opponent_checked = True
+                    elif player_arrows == ["high","high"]:
+                        # HORSE ATTEMPTS TO RAISE, WORKS 20% OF THE TIME
+                        if renpy.random.randint(1,5) == 2:
+                            if opponent_chips - current_bet >= 1 and player_chips - current_bet >= 1:
+                                $ current_bet += 1
+                                show screen cardgame_notify("Opponent raised the bet to [current_bet]!")
+                                pause 1.5
+                        else:
+                            show screen cardgame_notify("Opponent checks!")
+                            pause 1.5
+                            $ opponent_checked = True
+                elif opponent_picked.value == 9 or opponent_picked.value == 8:
+                    if player_arrows == ["low","low"]:
+                        # HORSE RAISES
+                        if opponent_chips - current_bet >= 1 and player_chips - current_bet >= 1:
+                            $ current_bet += 1
+                            show screen cardgame_notify("Opponent raised the bet to [current_bet]!")
+                            pause 1.5
+                        else:
+                            show screen cardgame_notify("Opponent checks!")
+                            pause 1.5
+                            $ opponent_checked = True
+                    elif player_arrows == ["low","high"] or player_arrows == ["high","low"]:
+                        # HORSE CHECKS
+                        show screen cardgame_notify("Opponent checks!")
+                        pause 1.5
+                        $ opponent_checked = True
+                    elif player_arrows == ["high","high"]:
+                        # HORSE CHECKS
+                        show screen cardgame_notify("Opponent checks!")
+                        pause 1.5
+                        $ opponent_checked = True
+                elif opponent_picked.value == 7:
+                    if player_arrows == ["low","low"]:
+                        # HORSE RAISES
+                        if opponent_chips - current_bet >= 1 and player_chips - current_bet >= 1:
+                            $ current_bet += 1
+                            show screen cardgame_notify("Opponent raised the bet to [current_bet]!")
+                            pause 1.5
+                        else:
+                            show screen cardgame_notify("Opponent checks!")
+                            pause 1.5
+                            $ opponent_checked = True
+                    elif player_arrows == ["low","high"] or player_arrows == ["high","low"]:
+                        # HORSE CHECKS
+                        show screen cardgame_notify("Opponent checks!")
+                        pause 1.5
+                        $ opponent_checked = True
+                    elif player_arrows == ["high","high"]:
+                        # HORSE CHECKS
+                        show screen cardgame_notify("Opponent checks!")
+                        pause 1.5
+                        $ opponent_checked = True
+                else:
+                    if player_arrows == ["low","low"]:
+                        # HORSE CHECKS
+                        show screen cardgame_notify("Opponent checks!")
+                        pause 1.5
+                        $ opponent_checked = True
+                    elif player_arrows == ["low","high"] or player_arrows == ["high","low"]:
+                        # HORSE CHECKS
+                        show screen cardgame_notify("Opponent checks!")
+                        pause 1.5
+                        $ opponent_checked = True
+                    elif player_arrows == ["high","high"]:
+                        # HORSE CHECKS
+                        show screen cardgame_notify("Opponent checks!")
+                        pause 1.5
+                        $ opponent_checked = True
+                $ previous_bet = current_bet
         # RESULTS
 
-        if opponent_picked.value == 1 and player_picked.value == 2:
-            $ round_winner = 'Player'
-        elif opponent_picked.value == 2 and player_picked.value == 1:
+        if player_status == "fold":
             $ round_winner = 'Opponent'
-        elif opponent_picked.value == player_picked.value:
-            $ round_winner = "Tie"
-        elif opponent_picked.value == 1 and player_picked.value != 2:
-            $ round_winner = 'Opponent'
-        elif opponent_picked.value != 2 and player_picked.value == 1:
-            $ round_winner = 'Player'
+            $ current_bet = previous_bet
         else:
-            if opponent_picked.value > player_picked.value:
-                $ round_winner = 'Opponent'
-            elif opponent_picked.value < player_picked.value:
+            if opponent_picked.value == 1 and player_picked.value == 2:
                 $ round_winner = 'Player'
+            elif opponent_picked.value == 2 and player_picked.value == 1:
+                $ round_winner = 'Opponent'
+            elif opponent_picked.value == player_picked.value:
+                $ round_winner = "Tie"
+            elif opponent_picked.value == 1 and player_picked.value != 2:
+                $ round_winner = 'Opponent'
+            elif opponent_picked.value != 2 and player_picked.value == 1:
+                $ round_winner = 'Player'
+            else:
+                if opponent_picked.value > player_picked.value:
+                    $ round_winner = 'Opponent'
+                elif opponent_picked.value < player_picked.value:
+                    $ round_winner = 'Player'
 
         $ renpy.show("card_back",[card_size_adjust,opponent_card_pos],layer="opponent_card_layer")
         $ renpy.show("card_back",[card_size_adjust,player_card_pos],layer="player_card_layer")
@@ -501,6 +579,7 @@ label cardgame_battle1(gamenumber):
             $ battle_three_won = False
     return
 
+
 screen cardgame_pick_card():
     default btn_hovered = None
 
@@ -547,15 +626,13 @@ screen cardgame_raise():
         xalign 0.5
         spacing 20
         imagebutton auto "images/tealgoat/chip_one_%s.png" action If(player_chips - current_bet >= 1 and opponent_chips - current_bet >= 1, true = SetVariable('current_bet', current_bet+1))
-        imagebutton auto "images/tealgoat/chip_three_%s.png" action If(player_chips - current_bet >= 3 and opponent_chips - current_bet >= 3, true = SetVariable('current_bet', current_bet+3))
-        imagebutton auto "images/tealgoat/chip_ten_%s.png" action If(player_chips - current_bet >= 10 and opponent_chips - current_bet >= 10, true = SetVariable('current_bet', current_bet+10))
-    imagebutton auto "images/tealgoat/minigame_clear_%s.png" action [SetVariable('player_current_bet',1)]ypos 800 xalign 0.5
+    imagebutton auto "images/tealgoat/minigame_clear_%s.png" action SetVariable('current_bet', previous_bet) ypos 800 xalign 0.5
     hbox:
         ypos 910
         spacing 20
         xalign 0.5
-        imagebutton auto "images/tealgoat/minigame_deal_%s.png" action Return("poker_check")
-        imagebutton auto "images/tealgoat/minigame_back_%s.png" action [SetVariable('current_bet', previous_bet),Return('poker_back')]
+        imagebutton auto "images/tealgoat/minigame_deal_%s.png" action Return("poker_deal")
+        imagebutton auto "images/tealgoat/minigame_check_%s.png" action [SetVariable('current_bet', previous_bet),Return('poker_back')]
 
 screen cardgame_notify(message):
     zorder 100
